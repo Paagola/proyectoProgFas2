@@ -1,0 +1,279 @@
+:root {
+    --bg-dark: #050510;
+    --panel-bg: #1a1a2e;
+    --text-main: #f0f0f0;
+    --accent-bueno: #00ff00;
+    --accent-malo: #ff0040;
+    --accent-piedra: #7f8c8d;
+    --border: #4d4dff;
+    --font-heading: 'Press Start 2P', cursive;
+    --font-main: 'VT323', monospace;
+    --pixel-shadow: 4px 4px 0px rgba(0, 0, 0, 0.5);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    image-rendering: pixelated;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    font-family: var(--font-main);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+}
+
+/* Layout Principal */
+.app-layout {
+    display: flex;
+    width: 100%;
+    height: 100%;
+}
+
+/* --- Sidebar (Retro Panel) --- */
+.sidebar {
+    width: 320px;
+    height: 100vh;
+    background-color: var(--panel-bg);
+    border-right: 4px solid var(--border);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    /* Reducido para que quepa mejor */
+    z-index: 10;
+    box-shadow: 8px 0 0 rgba(0, 0, 0, 0.3);
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* Scrollbar Pixel Art */
+.sidebar::-webkit-scrollbar {
+    width: 12px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: #000;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border: 2px solid #000;
+}
+
+.sidebar h1 {
+    font-family: var(--font-heading);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    text-align: center;
+    color: #fff;
+    text-shadow: 3px 3px 0px var(--border);
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 4px double var(--border);
+}
+
+.control-group h3,
+.live-stats h3 {
+    font-family: var(--font-heading);
+    font-size: 0.65rem;
+    margin-bottom: 15px;
+    color: var(--accent-bueno);
+    text-transform: uppercase;
+}
+
+label {
+    display: block;
+    margin-bottom: 20px;
+    font-size: 1.4rem;
+    color: #ccc;
+}
+
+label span {
+    float: right;
+    color: #fff;
+    background: #000;
+    padding: 0 5px;
+    border: 1px solid var(--border);
+}
+
+/* Sliders Retro */
+input[type=range] {
+    width: 100%;
+    margin-top: 10px;
+    background: transparent;
+    -webkit-appearance: none;
+    cursor: pointer;
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 12px;
+    background: #000;
+    border: 2px solid var(--border);
+}
+
+input[type=range]::-webkit-slider-thumb {
+    height: 20px;
+    width: 12px;
+    background: #fff;
+    border: 2px solid #000;
+    -webkit-appearance: none;
+    margin-top: -6px;
+    box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.5);
+}
+
+.slider-bueno::-webkit-slider-thumb {
+    background: var(--accent-bueno);
+}
+
+.slider-malo::-webkit-slider-thumb {
+    background: var(--accent-malo);
+}
+
+.slider-piedra::-webkit-slider-thumb {
+    background: var(--accent-piedra);
+}
+
+/* Botones 8-bit */
+.actions {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+button {
+    padding: 12px;
+    font-family: var(--font-heading);
+    font-size: 0.6rem;
+    border: 4px solid #000;
+    cursor: pointer;
+    text-transform: uppercase;
+    position: relative;
+    box-shadow: var(--pixel-shadow);
+}
+
+button:active {
+    top: 4px;
+    left: 4px;
+    box-shadow: none;
+}
+
+.btn-primary {
+    background: var(--accent-bueno);
+    color: #000;
+}
+
+.btn-primary:hover {
+    background: #32ff32;
+}
+
+.btn-secondary {
+    background: #555;
+    color: #fff;
+}
+
+.btn-secondary:hover {
+    background: #777;
+}
+
+/* Stats en vivo */
+.stat-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    font-size: 1.5rem;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 5px 10px;
+    border-left: 4px solid var(--border);
+}
+
+.dot {
+    width: 12px;
+    height: 12px;
+    display: inline-block;
+    margin-right: 10px;
+    border: 2px solid #000;
+}
+
+.bueno-bg {
+    background: var(--accent-bueno);
+}
+
+.malo-bg {
+    background: var(--accent-malo);
+}
+
+.piedra-bg {
+    background: var(--accent-piedra);
+}
+
+/* --- Canvas Area --- */
+.canvas-wrapper {
+    flex-grow: 1;
+    overflow: hidden;
+    background: #000;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+canvas {
+    background-color: #050510;
+    image-rendering: pixelated;
+    border: 4px solid var(--border);
+    box-shadow: 0 0 20px rgba(77, 77, 255, 0.2);
+    max-width: 100%;
+    max-height: 100%;
+}
+
+/* Modal Retro */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+}
+
+.hidden {
+    display: none;
+}
+
+.modal-content {
+    background: #1a1a2e;
+    padding: 40px;
+    border: 8px double var(--border);
+    text-align: center;
+    box-shadow: 0 0 50px #000;
+}
+
+.modal-content h2 {
+    font-family: var(--font-heading);
+    font-size: 1rem;
+    margin-bottom: 20px;
+    color: var(--accent-malo);
+}
+
+.modal-content p {
+    font-size: 2rem;
+    margin-bottom: 30px;
+}
+
+#btn-modal-restart {
+    background: var(--accent-bueno);
+    color: #000;
+    font-size: 0.7rem;
+}

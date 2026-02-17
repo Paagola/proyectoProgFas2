@@ -1,200 +1,94 @@
-import { Piedra, Malo, Bueno, Elemento } from './models.js';
-import { GameEngine, CONSTANTS } from './engine.js';
+import { GameEngine } from './engine.js';
+import { Pathfinding } from './pathfinding.js';
+import { AssetManager, ANIMATIONS } from './assets.js';
+import { state } from './state.js';
+import { UI, updateInputDisplay, updatePauseButton, hideGameOverModal, updateFPSDisplay } from './ui.js';
+import { resizeCanvas, draw } from './renderer.js';
+import { updateGameLogic, resetSimulation } from './simulation.js';
 
-// --- Configuración e Inicialización ---
-const canvas = document.getElementById('simulationCanvas');
-const ctx = canvas.getContext('2d');
+// --- Estado Global e Instancias ---
 const engine = new GameEngine();
+const pathfinder = new Pathfinding(engine);
+const assets = new AssetManager();
 
-// Ajustar tamaño del canvas
-canvas.width = CONSTANTS.COLS * CONSTANTS.CELL_SIZE;
-canvas.height = CONSTANTS.ROWS * CONSTANTS.CELL_SIZE;
+// --- Lógica de Inicialización ---
 
-// Listas de entidades
-let buenos = [];
-let malos = [];
-let piedras = [];
-let isRunning = true;
-
-// Referencias UI
-const uiBuenos = document.getElementById('counter-buenos');
-const uiMalos = document.getElementById('counter-malos');
-const modal = document.getElementById('modal-gameover');
-const winnerText = document.getElementById('winner-text');
-
-function getRandomCoord() {
-    return {
-        x: Math.floor(Math.random() * CONSTANTS.COLS),
-        y: Math.floor(Math.random() * CONSTANTS.ROWS)
-    };
+function init() {
+    resetSimulation(state, engine, resizeCanvas);
+    draw(state, assets);
 }
 
-function initWorld() {
-    // 1. Generar Piedras (Sin restricción de distancia, solo colisión simple)
-    let placed = 0;
-    while (placed < 100) {
-        const { x, y } = getRandomCoord();
-        if (engine.isCellEmpty(x, y)) {
-            const p = new Piedra(x, y);
-            engine.placeEntity(p);
-            piedras.push(p);
-            placed++;
-        }
-    }
-
-    // 2. Generar Malos (20 unidades)
-    placed = 0;
-    while (placed < 20) {
-        const { x, y } = getRandomCoord();
-        // Validar Grid vacío
-        if (engine.isCellEmpty(x, y)) {
-            const m = new Malo(x, y);
-            engine.placeEntity(m);
-            malos.push(m);
-            placed++;
-        }
-    }
-
-    // 3. Generar Buenos (100 unidades)
-    // Validar: Grid vacío Y lejanía de Malos
-    placed = 0;
-    let attempts = 0;
-    while (placed < 100 && attempts < 100000) {
-        const { x, y } = getRandomCoord();
-        if (engine.isCellEmpty(x, y)) {
-            // Verificar "App.malosYbuenosLejos"
-            if (engine.checkSafetyDistance(x, y, 'Bueno', malos)) {
-                const b = new Bueno(x, y);
-                engine.placeEntity(b);
-                buenos.push(b);
-                placed++;
-            }
-        }
-        attempts++;
-    }
-    
-    // Nota: Se podría implementar la validación inversa (Malo lejos de Bueno) 
-    // pero el orden del prompt sugiere instanciar y validar en cascada.
-}
-
-// --- Lógica del Juego (Fases) ---
-
-function findClosest(entity, targets) {
-    let closest = null;
-    let minDst = Infinity;
-
-    for (const t of targets) {
-        const dst = engine.getManhattanDistance(entity, t);
-        if (dst < minDst) {
-            minDst = dst;
-            closest = t;
-        }
-    }
-    return { target: closest, dist: minDst };
-}
-
-function update() {
-    if (!isRunning) return;
-
-    // 1. Fase de Combate (Iterar sobre Malos)
-    malos.forEach(malo => {
-        // Buscar Buenos en rango de ataque (Chebyshev <= 1)
-        const targetsInMelee = buenos.filter(b => engine.getChebyshevDistance(malo, b) <= 1);
-        
-        if (targetsInMelee.length > 0) {
-            // Atacar al primero encontrado (o aleatorio)
-            malo.atacar(targetsInMelee[0]);
-        }
-    });
-
-    // 2. Fase de Limpieza (Garbage Collection)
-    const deadFilter = (e) => {
-        if (!e.estaVivo()) {
-            engine.removeEntity(e); // Quitar del grid lógico
-            return false;
-        }
-        return true;
-    };
-
-    buenos = buenos.filter(deadFilter);
-    malos = malos.filter(deadFilter); // Malos pueden morir por fallo crítico
-
-    // Actualizar UI
-    uiBuenos.innerText = buenos.length;
-    uiMalos.innerText = malos.length;
-
-    // Verificar Game Over
-    if (buenos.length === 0 || malos.length === 0) {
-        isRunning = false;
-        modal.classList.remove('hidden');
-        winnerText.innerText = buenos.length === 0 ? "¡Los MALOS han ganado!" : "¡Los BUENOS han sobrevivido!";
-        return;
-    }
-
-    // 3. Fase de Movimiento
-    // Unir listas para iterar movimiento (podríamos randomizar el orden para evitar sesgo)
-    const movers = [...malos, ...buenos];
-    
-    movers.forEach(agente => {
-        if (!agente.estaVivo()) return;
-
-        let target = null;
-
-        if (agente instanceof Malo) {
-            // Objetivo: Bueno más cercano
-            const result = findClosest(agente, buenos);
-            target = result.target;
-        } else if (agente instanceof Bueno) {
-            // Objetivo: Malo más cercano (para huir)
-            const result = findClosest(agente, malos);
-            // Trigger de Huida: Solo si Distancia < 10
-            if (result.dist < 10) {
-                target = result.target;
-            }
-        }
-
-        // Calcular siguiente posición válida
-        const nextPos = engine.calcularSiguientePaso(agente, target);
-
-        // Mover si cambió la posición
-        if (nextPos.x !== agente.x || nextPos.y !== agente.y) {
-            engine.updateEntityPosition(agente, nextPos.x, nextPos.y);
-        }
-    });
-}
-
-function draw() {
-    // Limpiar canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Dibujar todas las entidades
-    // Función helper interna
-    const drawEntity = (e) => {
-        ctx.fillStyle = e.color;
-        // Dibujamos un cuadrado de 10x10 en la posición calculada
-        ctx.fillRect(e.x * CONSTANTS.CELL_SIZE, e.y * CONSTANTS.CELL_SIZE, CONSTANTS.CELL_SIZE, CONSTANTS.CELL_SIZE);
-    };
-
-    piedras.forEach(drawEntity);
-    buenos.forEach(drawEntity);
-    malos.forEach(drawEntity);
-}
-
-// --- Game Loop ---
-
-let lastTime = 0;
-// Limitador de FPS opcional si se quiere ver más lento, 
-// pero requestAnimationFrame suele ir a 60fps.
+// Bucle de animación
 function loop(timestamp) {
-    if (!isRunning) return;
-
-    // Ejecutar lógica y render
-    update();
-    draw();
-
     requestAnimationFrame(loop);
+    const elapsed = timestamp - state.lastFrameTime;
+    if (elapsed > state.fpsInterval) {
+        state.lastFrameTime = timestamp - (elapsed % state.fpsInterval);
+        if (state.isRunning) {
+            updateGameLogic(state, engine, pathfinder);
+        }
+        draw(state, assets); // Dibujar siempre, incluso en pausa
+    }
 }
 
-// Iniciar
-initWorld();
+// --- Listeners de Eventos ---
+
+UI.inputBuenos.addEventListener('input', () => updateInputDisplay(UI.inputBuenos, 'val-buenos'));
+UI.inputMalos.addEventListener('input', () => updateInputDisplay(UI.inputMalos, 'val-malos'));
+UI.inputPiedras.addEventListener('input', () => updateInputDisplay(UI.inputPiedras, 'val-piedras'));
+UI.inputFps.addEventListener('input', (e) => {
+    state.fpsInterval = 1000 / e.target.value;
+    updateFPSDisplay(e.target.value);
+});
+
+UI.btnStart.addEventListener('click', init);
+UI.btnPause.addEventListener('click', () => {
+    state.isRunning = !state.isRunning;
+    updatePauseButton(state.isRunning);
+});
+UI.btnModalRestart.addEventListener('click', () => {
+    hideGameOverModal();
+    init();
+});
+
+// --- Carga de Assets ---
+
+async function loadGameAssets() {
+    const promises = [];
+
+    // Cargar sprites de personajes
+    for (const key in ANIMATIONS) {
+        if (key === 'PIEDRA') continue;
+        const config = ANIMATIONS[key];
+        for (const stateName in config.states) {
+            const path = config.basePath + config.states[stateName].file;
+            promises.push(assets.loadAsset(`${key}_${stateName}`, path)
+                .catch(err => console.error(`Fallo al cargar ${path}:`, err)));
+        }
+    }
+
+    // Cargar sprite de piedra
+    promises.push(assets.loadAsset('PIEDRA', ANIMATIONS.PIEDRA.path)
+        .catch(err => console.error(`Fallo al cargar ${ANIMATIONS.PIEDRA.path}:`, err)));
+
+    // Cargar fondo
+    promises.push(assets.loadAsset('BACKGROUND', ANIMATIONS.BACKGROUND.path)
+        .catch(err => console.error(`Fallo al cargar ${ANIMATIONS.BACKGROUND.path}:`, err)));
+
+    await Promise.all(promises);
+    console.log("Assets cargados!");
+    init();
+}
+
+// --- Arranque ---
+
+// Configuración inicial de visualización
+updateInputDisplay(UI.inputBuenos, 'val-buenos');
+updateInputDisplay(UI.inputMalos, 'val-malos');
+updateInputDisplay(UI.inputPiedras, 'val-piedras');
+
+state.isRunning = false;
+UI.btnPause.innerText = "INICIAR";
+
+loadGameAssets(); // Cargar assets antes de iniciar
 requestAnimationFrame(loop);

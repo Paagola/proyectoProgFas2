@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulación: Batalla de Elementos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    
+    <!-- Contenedor Principal (Layout Flex) -->
+    <div class="app-layout">
+        
+        <!-- Panel de Configuración (Izquierda) -->
+        <aside class="sidebar">
+            <h1>BATTLE OF<br>ELEMENTS</h1>
+            
+            <div class="control-group">
+                <h3>Configuración Inicial</h3>
+                
+                <label>
+                    Población Buenos: <span id="val-buenos">15</span>
+                    <input type="range" id="cfg-buenos" min="5" max="100" value="15" class="slider slider-bueno">
+                </label>
+
+                <label>
+                    Población Malos: <span id="val-malos">5</span>
+                    <input type="range" id="cfg-malos" min="1" max="50" value="5" class="slider slider-malo">
+                </label>
+
+                <label>
+                    Densidad Piedras: <span id="val-piedras">15</span>
+                    <input type="range" id="cfg-piedras" min="0" max="100" value="15" class="slider slider-piedra">
+                </label>
+            </div>
+
+            <div class="control-group">
+                <h3>Control de Tiempo</h3>
+                <label>
+                    Velocidad (FPS): <span id="val-fps">5</span>
+                    <input type="range" id="cfg-fps" min="1" max="60" value="5" class="slider">
+                </label>
+            </div>
+
+            <div class="actions">
+                <button id="btn-start" class="btn-primary">REINICIAR SIMULACIÓN</button>
+                <button id="btn-pause" class="btn-secondary">PAUSAR</button>
+            </div>
+
+            <div class="live-stats">
+                <h3>Estadísticas en Vivo</h3>
+                <div class="stat-row">
+                    <span class="dot bueno-bg"></span> Buenos: 
+                    <strong id="stat-buenos">0</strong>
+                </div>
+                <div class="stat-row">
+                    <span class="dot malo-bg"></span> Malos: 
+                    <strong id="stat-malos">0</strong>
+                </div>
+                <div class="stat-row">
+                    <span class="dot piedra-bg"></span> Turno: 
+                    <strong id="stat-turnos">0</strong>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Área de Visualización (Derecha) -->
+        <main class="canvas-wrapper">
+            <canvas id="simulationCanvas"></canvas>
+        </main>
+    </div>
+
+    <!-- Modal Game Over -->
+    <div id="modal-gameover" class="modal hidden">
+        <div class="modal-content">
+            <h2>SIMULACIÓN TERMINADA</h2>
+            <p id="winner-text"></p>
+            <button id="btn-modal-restart">Nueva Configuración</button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
