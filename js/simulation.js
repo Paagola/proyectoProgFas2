@@ -139,8 +139,8 @@ export function updateGameLogic(state, engine, pathfinder) {
  */
 export function getRandomCoord() {
     return {
-        x: Math.floor(Math.random() * (CONSTANTS.COLS - 2)),
-        y: Math.floor(Math.random() * (CONSTANTS.ROWS - 2))
+        x: Math.floor(Math.random() * (CONSTANTS.COLS)),
+        y: Math.floor(Math.random() * (CONSTANTS.ROWS))
     };
 }
 

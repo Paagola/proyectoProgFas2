@@ -124,9 +124,9 @@ export function draw(state, assets) {
 
             const img = assets.images['PIEDRA'];
             if (img) {
-                const cropMargin = img.width * 0.35;
-                const sourceSize = img.width * 0.35;
-                const stoneSize = s * 0.8;
+                const cropMargin = img.width * 0.1;
+                const sourceSize = img.width * 0.8;
+                const stoneSize = s * 0.9;
                 const offset = (s - stoneSize) / 2;
 
                 ctx.drawImage(
@@ -135,7 +135,7 @@ export function draw(state, assets) {
                     x + offset, y + offset, stoneSize, stoneSize
                 );
             } else {
-                const stoneSize = s * 0.6;
+                const stoneSize = s * 0.9;
                 const offset = (s - stoneSize) / 2;
                 const px = stoneSize / 4;
                 ctx.fillStyle = '#454d4f';

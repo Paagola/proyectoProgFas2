@@ -21,8 +21,9 @@ export class Pathfinding {
 
         // Vecindad de Moore (8 direcciones)
         const dirs = [
-            { dx: 0, dy: -1 }, { dx: 1, dy: -1 }, { dx: 1, dy: 0 }, { dx: 1, dy: 1 },
-            { dx: 0, dy: 1 }, { dx: -1, dy: 1 }, { dx: -1, dy: 0 }, { dx: -1, dy: -1 }
+            { dx: 0, dy: 0 }, { dx: 1, dy: 0 }, { dx: -1, dy: 0 }, { dx: 0, dy: 1 },
+            { dx: 1, dy: 1 }, { dx: -1, dy: 1 }, { dx: 0, dy: -1 }, { dx: 1, dy: -1 },
+            { dx: -1, dy: -1 }
         ].sort(() => Math.random() - 0.5); // Randomizar orden para evitar sesgo diagonal
 
         for (let dir of dirs) {
@@ -34,11 +35,11 @@ export class Pathfinding {
 
             if (isDestinationEmpty) {
                 // Prevención de "Corner Cutting": No pasar en diagonal si hay un obstáculo en el lateral
-                if (dir.dx !== 0 && dir.dy !== 0) {
-                    const block1 = !this.engine.isCellEmpty(agente.x + dir.dx, agente.y);
-                    const block2 = !this.engine.isCellEmpty(agente.x, agente.y + dir.dy);
-                    if (block1 || block2) continue; // Bloquear si hay pared en las esquinas
-                }
+                // if (dir.dx !== 0 && dir.dy !== 0) {
+                //     const block1 = !this.engine.isCellEmpty(agente.x + dir.dx, agente.y);
+                //     const block2 = !this.engine.isCellEmpty(agente.x, agente.y + dir.dy);
+                //     if (block1 || block2) continue; // Bloquear si hay pared en las esquinas
+                // }
 
                 const dist = Math.abs(nx - objetivo.x) + Math.abs(ny - objetivo.y);
 

@@ -45,7 +45,7 @@ export const ANIMATIONS = {
     MALO: {
         basePath: 'assets/Monsters_Creatures_Fantasy/Monsters_Creatures_Fantasy/Flying eye/',
         frameWidth: 150,
-        frameHeight: 150,
+        frameHeight: 110,
         states: {
             idle: { file: 'Flight.png', frames: 8 },
             run: { file: 'Flight.png', frames: 8 },
