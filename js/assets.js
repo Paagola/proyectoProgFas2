@@ -31,7 +31,7 @@ export class AssetManager {
 
 export const ANIMATIONS = {
     BUENO: {
-        basePath: 'assets/FreeKnight_v1/Colour1/Outline/120x80_PNGSheets/',
+        basePath: '/assets/FreeKnight_v1/Colour1/Outline/120x80_PNGSheets/',
         frameWidth: 120,
         frameHeight: 80,
         states: {
