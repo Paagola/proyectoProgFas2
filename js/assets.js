@@ -35,7 +35,7 @@ export const ANIMATIONS = {
         frameWidth: 120,
         frameHeight: 80,
         states: {
-            idle: { file: 'assets/FreeKnight_v1/Colour1/Outline/120x80_PNGSheets/_Idle.png', frames: 10 },
+            idle: { file: '_Idle.png', frames: 10 },
             run: { file: '_Run.png', frames: 10 },
             attack: { file: '_Attack.png', frames: 4 },
             hit: { file: '_Hit.png', frames: 1 },
