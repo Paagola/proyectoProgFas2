@@ -1,3 +1,5 @@
+import { CONSTANTS } from './engine.js';
+
 const generateUUID = () => Math.random().toString(36).substr(2, 9);
 
 export class Elemento {
@@ -11,7 +13,10 @@ export class Elemento {
 export class Piedra extends Elemento {
     constructor(x, y) {
         super(x, y);
-        this.color = '#555'; // Gris piedra
+        // Tamaño en píxeles que usa el renderer (no cambiar aquí sin sincronizar)
+        this.size = 50;
+        // Lista de celdas del grid ocupadas por esta piedra
+        this._occupiedCells = [];
     }
 }
 
@@ -28,6 +33,16 @@ export class Personaje extends Elemento {
         this.facingRight = true;
         this.isDead = false;
         this.currentTarget = null;
+
+        // --- Movimiento fluido ---
+        this.vx = 0;
+        this.vy = 0;
+        this.speed = 50; // pixels per second
+
+        // --- Ocupación de grid ---
+        this.size = 147; // Tamaño del sprite en píxeles
+        this.isCharacter = true; // Para que engine.js lo identifique como personaje
+        this._occupiedCells = [];
     }
 
     estaVivo() {
@@ -49,10 +64,10 @@ export class Personaje extends Elemento {
     updateAnimation(deltaTime, framesCount) {
         this.animationTimer += deltaTime;
 
-        // Velocidades variables según el estado (espadazos rápidos)
+        // Velocidades variables según el estado (ataques más lentos)
         let frameDuration = 100; // base: idle/run
-        if (this.state === 'attack') frameDuration = 45; // ¡Súper rápido!
-        if (this.state === 'hit') frameDuration = 40;    // Reacción inmediata
+        if (this.state === 'attack') frameDuration = 90; // Más lento
+        if (this.state === 'hit') frameDuration = 80;    // Reacción más lenta
 
         if (this.animationTimer >= frameDuration) {
             this.animationTimer = 0;
@@ -83,7 +98,7 @@ export class Personaje extends Elemento {
 export class Malo extends Personaje {
     constructor(x, y) {
         super(x, y);
-        this.color = '#FF0000'; // Rojo Sith
+        this.speed = 60; // Slightly faster than Bueno
     }
 
     atacar(objetivo) {
@@ -110,7 +125,7 @@ export class Malo extends Personaje {
 export class Bueno extends Personaje {
     constructor(x, y) {
         super(x, y);
-        this.color = '#00FF00'; // Verde Jedi
+        this.speed = 40; // Slower than Malo
     }
 
     // Los buenos podrían contraatacar o simplemente defenderse visualmente

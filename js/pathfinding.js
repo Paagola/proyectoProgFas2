@@ -11,51 +11,73 @@ export class Pathfinding {
     }
 
     calcularSiguientePaso(agente, objetivo) {
-        let bestX = agente.x;
-        let bestY = agente.y;
+        if (!objetivo) {
+            const agenteCellX = Math.floor(agente.x / CONSTANTS.CELL_SIZE);
+            const agenteCellY = Math.floor(agente.y / CONSTANTS.CELL_SIZE);
+            return { x: agenteCellX, y: agenteCellY };
+        }
 
-        if (!objetivo) return { x: bestX, y: bestY };
+        // Calcular dirección hacia el objetivo
+        const dx = objetivo.x - agente.x;
+        const dy = objetivo.y - agente.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        
+        if (dist === 0) {
+            const agenteCellX = Math.floor(agente.x / CONSTANTS.CELL_SIZE);
+            const agenteCellY = Math.floor(agente.y / CONSTANTS.CELL_SIZE);
+            return { x: agenteCellX, y: agenteCellY };
+        }
 
-        // Malo: busca mínimo coste (acercarse). Bueno: busca máximo coste (alejarse)
-        let bestDistance = (agente instanceof Malo) ? Infinity : -1;
+        // Normalizar dirección
+        const dirX = dx / dist;
+        const dirY = dy / dist;
 
-        // Vecindad de Moore (8 direcciones)
-        const dirs = [
-            { dx: 0, dy: 0 }, { dx: 1, dy: 0 }, { dx: -1, dy: 0 }, { dx: 0, dy: 1 },
-            { dx: 1, dy: 1 }, { dx: -1, dy: 1 }, { dx: 0, dy: -1 }, { dx: 1, dy: -1 },
-            { dx: -1, dy: -1 }
-        ].sort(() => Math.random() - 0.5); // Randomizar orden para evitar sesgo diagonal
+        // Calcular 8 direcciones prioritizadas por cercanía al objetivo
+        const directions = [
+            { x: dirX, y: dirY, name: "direct" },           // Dirección directa
+            { x: dirX > 0 ? 1 : -1, y: 0, name: "x" },      // Horizontal
+            { x: 0, y: dirY > 0 ? 1 : -1, name: "y" },      // Vertical
+            { x: dirX > 0 ? 1 : -1, y: dirY > 0 ? 1 : -1, name: "diagonal" },  // Diagonal
+            { x: -dirY, y: dirX, name: "slide_left" },      // Perpendicular izquierda
+            { x: dirY, y: -dirX, name: "slide_right" }        // Opuesto (fallback)
+        ];
 
-        for (let dir of dirs) {
-            const nx = agente.x + dir.dx;
-            const ny = agente.y + dir.dy;
-
-            // Verificar límites y vacante (Hard Walls) con margen de seguridad
-            const isDestinationEmpty = this.engine.isCellEmpty(nx, ny, 1);
-
-            if (isDestinationEmpty) {
-                // Prevención de "Corner Cutting": No pasar en diagonal si hay un obstáculo en el lateral
-                // if (dir.dx !== 0 && dir.dy !== 0) {
-                //     const block1 = !this.engine.isCellEmpty(agente.x + dir.dx, agente.y);
-                //     const block2 = !this.engine.isCellEmpty(agente.x, agente.y + dir.dy);
-                //     if (block1 || block2) continue; // Bloquear si hay pared en las esquinas
-                // }
-
-                const dist = Math.abs(nx - objetivo.x) + Math.abs(ny - objetivo.y);
-
-                if (agente instanceof Malo) {
-                    if (dist < bestDistance) {
-                        bestDistance = dist;
-                        bestX = nx; bestY = ny;
-                    }
-                } else { // Bueno alejándose
-                    if (dist > bestDistance) {
-                        bestDistance = dist;
-                        bestX = nx; bestY = ny;
-                    }
-                }
+        // Para cada dirección, intentar un pequeño paso en píxeles
+        const stepSize = CONSTANTS.CELL_SIZE; // 1 celda de movimiento (más fino)
+        
+        for (const dir of directions) {
+            const testX = agente.x + dir.x * stepSize;
+            const testY = agente.y + dir.y * stepSize;
+            
+            if (this.engine.canMoveTo(agente, testX, testY)) {
+                // Retornar la celda destino (no el pixel exacto)
+                const cellX = Math.floor(testX / CONSTANTS.CELL_SIZE);
+                const cellY = Math.floor(testY / CONSTANTS.CELL_SIZE);
+                return { x: cellX, y: cellY };
             }
         }
-        return { x: bestX, y: bestY };
+
+        // Si todas las direcciones están bloqueadas, intentar pasos más pequeños (media celda)
+        const smallStepSize = CONSTANTS.CELL_SIZE / 2;
+        const smallDirections = [
+            { x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 },
+            { x: 1, y: 1 }, { x: 1, y: -1 }, { x: -1, y: 1 }, { x: -1, y: -1 }
+        ];
+        
+        for (const dir of smallDirections) {
+            const testX = agente.x + dir.x * smallStepSize;
+            const testY = agente.y + dir.y * smallStepSize;
+            
+            if (this.engine.canMoveTo(agente, testX, testY)) {
+                const cellX = Math.floor(testX / CONSTANTS.CELL_SIZE);
+                const cellY = Math.floor(testY / CONSTANTS.CELL_SIZE);
+                return { x: cellX, y: cellY };
+            }
+        }
+
+        // Si aún así no se puede mover, quedarse en lugar
+        const agenteCellX = Math.floor(agente.x / CONSTANTS.CELL_SIZE);
+        const agenteCellY = Math.floor(agente.y / CONSTANTS.CELL_SIZE);
+        return { x: agenteCellX, y: agenteCellY };
     }
 }
