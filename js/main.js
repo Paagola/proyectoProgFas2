@@ -1,45 +1,49 @@
-import { GameEngine } from './engine.js';
+import { GameEngine, CONSTANTS } from './engine.js';
 import { Pathfinding } from './pathfinding.js';
-import { AssetManager, ANIMATIONS } from './assets.js';
+import { AssetManager, ANIMATIONS, getEnemyAnimConfig } from './assets.js';
 import { state } from './state.js';
-import { UI, updateInputDisplay, updatePauseButton, hideGameOverModal, updateFPSDisplay } from './ui.js';
+import { UI, updateInputDisplay, updatePauseButton, hideGameOverModal } from './ui.js';
 import { resizeCanvas, draw } from './renderer.js';
-import { updateGameLogic, resetSimulation } from './simulation.js';
+import { updateGameLogic, resetSimulation, handlePlayerInput } from './simulation.js';
+import { ENEMY_TYPES } from './models.js';
 
-// --- Estado Global e Instancias ---
+// --- Instances ---
 const engine = new GameEngine();
 const pathfinder = new Pathfinding(engine);
 const assets = new AssetManager();
 
-// --- Lógica de Inicialización ---
-
+// --- Init ---
 function init() {
+    // FORCE exact defaults to fix the sticky "16" bug
+    if (UI.inputBuenos) UI.inputBuenos.value = 6;
+    if (UI.inputPiedras) UI.inputPiedras.value = 20;
+
+    updateInputDisplay(UI.inputBuenos, 'val-buenos');
+    updateInputDisplay(UI.inputPiedras, 'val-piedras');
+
     resetSimulation(state, engine, resizeCanvas);
+    updatePauseButton(true);
+}
+
+// --- Main Loop (requestAnimationFrame at 60fps) ---
+let lastTimestamp = 0;
+function loop(timestamp) {
+    requestAnimationFrame(loop);
+    const raw = timestamp - lastTimestamp;
+    lastTimestamp = timestamp;
+    // Clamp deltaTime to avoid huge jumps after tab-switch
+    state.deltaTime = Math.min(raw, 50);
+
+    if (state.isRunning) {
+        updateGameLogic(state, engine, pathfinder);
+    }
     draw(state, assets);
 }
 
-// Bucle de animación
-function loop(timestamp) {
-    requestAnimationFrame(loop);
-    const elapsed = timestamp - state.lastFrameTime;
-    if (elapsed > state.fpsInterval) {
-        state.lastFrameTime = timestamp - (elapsed % state.fpsInterval);
-        if (state.isRunning) {
-            updateGameLogic(state, engine, pathfinder);
-        }
-        draw(state, assets); // Dibujar siempre, incluso en pausa
-    }
-}
-
-// --- Listeners de Eventos ---
-
+// --- Event Listeners ---
 UI.inputBuenos.addEventListener('input', () => updateInputDisplay(UI.inputBuenos, 'val-buenos'));
-UI.inputMalos.addEventListener('input', () => updateInputDisplay(UI.inputMalos, 'val-malos'));
+if (UI.inputMalos) UI.inputMalos.addEventListener('input', () => updateInputDisplay(UI.inputMalos, 'val-malos'));
 UI.inputPiedras.addEventListener('input', () => updateInputDisplay(UI.inputPiedras, 'val-piedras'));
-UI.inputFps.addEventListener('input', (e) => {
-    state.fpsInterval = 1000 / e.target.value;
-    updateFPSDisplay(e.target.value);
-});
 
 UI.btnStart.addEventListener('click', init);
 UI.btnPause.addEventListener('click', () => {
@@ -51,44 +55,70 @@ UI.btnModalRestart.addEventListener('click', () => {
     init();
 });
 
-// --- Carga de Assets ---
+window.addEventListener('resize', () => {
+    resizeCanvas();
+});
 
+// --- Mouse Interaction ---
+UI.canvas.addEventListener('mousedown', (e) => {
+    if (!state.isRunning) return;
+
+    const rect = UI.canvas.getBoundingClientRect();
+    const px = e.clientX - rect.left;
+    const py = e.clientY - rect.top;
+
+    // Convert to grid coords
+    const gridX = Math.floor((px * UI.canvas.width / rect.width) / CONSTANTS.CELL_SIZE);
+    const gridY = Math.floor((py * UI.canvas.height / rect.height) / CONSTANTS.CELL_SIZE);
+
+    // Call the interaction handler directly since it's already imported at the top
+    handlePlayerInput(state, engine, pathfinder, gridX, gridY, state.selectedTool);
+});
+
+UI.toolBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+        UI.toolBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.selectedTool = btn.dataset.tool;
+    });
+});
+
+
+// --- Asset Loading ---
 async function loadGameAssets() {
     const promises = [];
 
-    // Cargar sprites de personajes
-    for (const key in ANIMATIONS) {
-        if (key === 'PIEDRA') continue;
-        const config = ANIMATIONS[key];
+    // Load BUENO sprites
+    for (const stateName in ANIMATIONS.BUENO.states) {
+        const path = ANIMATIONS.BUENO.basePath + ANIMATIONS.BUENO.states[stateName].file;
+        promises.push(assets.loadAsset(`BUENO_${stateName}`, path));
+    }
+
+    // Load all 4 enemy type sprites
+    for (const type of ENEMY_TYPES) {
+        const config = getEnemyAnimConfig(type);
         for (const stateName in config.states) {
             const path = config.basePath + config.states[stateName].file;
-            promises.push(assets.loadAsset(`${key}_${stateName}`, path)
-                .catch(err => console.error(`Fallo al cargar ${path}:`, err)));
+            promises.push(assets.loadAsset(`${type}_${stateName}`, path));
         }
     }
 
-    // Cargar sprite de piedra
-    promises.push(assets.loadAsset('PIEDRA', ANIMATIONS.PIEDRA.path)
-        .catch(err => console.error(`Fallo al cargar ${ANIMATIONS.PIEDRA.path}:`, err)));
-
-    // Cargar fondo
-    promises.push(assets.loadAsset('BACKGROUND', ANIMATIONS.BACKGROUND.path)
-        .catch(err => console.error(`Fallo al cargar ${ANIMATIONS.BACKGROUND.path}:`, err)));
+    // Load decor
+    promises.push(assets.loadAsset('PIEDRA', ANIMATIONS.PIEDRA.path));
+    promises.push(assets.loadAsset('BACKGROUND', ANIMATIONS.BACKGROUND.path));
 
     await Promise.all(promises);
-    console.log("Assets cargados!");
+    console.log('✅ Assets loaded. Starting...');
     init();
 }
 
-// --- Arranque ---
-
-// Configuración inicial de visualización
+// --- Start ---
 updateInputDisplay(UI.inputBuenos, 'val-buenos');
-updateInputDisplay(UI.inputMalos, 'val-malos');
 updateInputDisplay(UI.inputPiedras, 'val-piedras');
+if (UI.inputMalos) updateInputDisplay(UI.inputMalos, 'val-malos');
 
 state.isRunning = false;
-UI.btnPause.innerText = "INICIAR";
+updatePauseButton(false);
 
-loadGameAssets(); // Cargar assets antes de iniciar
+loadGameAssets();
 requestAnimationFrame(loop);

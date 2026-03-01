@@ -3,86 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulación: Batalla de Elementos</title>
+    <title>Battle of Elements — Wave Defense</title>
+    <meta name="description" content="Juego de defensa por oleadas con heroes y monstruos. Defiende tu territorio contra oleadas de criaturas fantasticas.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    
-    <!-- Contenedor Principal (Layout Flex) -->
     <div class="app-layout">
-        
-        <!-- Panel de Configuración (Izquierda) -->
+
+        <!-- ── Sidebar ──────────────────────────────────────────────────── -->
         <aside class="sidebar">
-            <h1>BATTLE OF<br>ELEMENTS</h1>
-            
-            <div class="control-group">
-                <h3>Configuración Inicial</h3>
-                
-                <label>
-                    Población Buenos: <span id="val-buenos">15</span>
-                    <input type="range" id="cfg-buenos" min="5" max="100" value="15" class="slider slider-bueno">
-                </label>
-
-                <label>
-                    Población Malos: <span id="val-malos">5</span>
-                    <input type="range" id="cfg-malos" min="5" max="100" value="5" class="slider slider-malo">
-                </label>
-
-                <label>
-                    Densidad Piedras: <span id="val-piedras">15</span>
-                    <input type="range" id="cfg-piedras" min="0" max="100" value="15" class="slider slider-piedra">
-                </label>
+            <div class="sidebar-header">
+                <h1>CORE<br><span class="title-sub">TACTICAL ENGINE</span></h1>
             </div>
 
-            <div class="control-group">
-                <h3>Control de Tiempo</h3>
-                <label>
-                    Velocidad (FPS): <span id="val-fps">5</span>
-                    <input type="range" id="cfg-fps" min="1" max="60" value="5" class="slider">
-                </label>
+            <!-- Level & Wave display -->
+            <div class="level-badge-group">
+                <div class="level-badge">
+                    <span class="badge-label">NIVEL</span>
+                    <span class="badge-value" id="stat-level">1</span>
+                </div>
+                <div class="level-badge enemy-badge">
+                    <span class="badge-label">OLEADA</span>
+                    <span class="badge-value" id="stat-wave">0</span>
+                </div>
+                <div class="level-badge gold-badge">
+                    <span class="badge-label">ORO</span>
+                    <span class="badge-value" id="stat-gold">150</span>
+                </div>
             </div>
 
+            <!-- Config -->
+            <div class="control-group">
+                <h3 class="group-title">⚙ Configuración</h3>
+
+                <label class="slider-label">
+                    <span class="label-text">Héroes (Max 60)</span>
+                    <span class="label-val" id="val-buenos">6</span>
+                </label>
+                <input type="range" id="cfg-buenos" min="1" max="60" value="6" class="slider slider-bueno" autocomplete="off">
+
+                <label class="slider-label">
+                    <span class="label-text">Piedras (Max 150)</span>
+                    <span class="label-val" id="val-piedras">20</span>
+                </label>
+                <input type="range" id="cfg-piedras" min="0" max="150" value="20" class="slider slider-piedra" autocomplete="off">
+            </div>
+
+            <!-- Actions -->
             <div class="actions">
-                <button id="btn-start" class="btn-primary">REINICIAR SIMULACIÓN</button>
-                <button id="btn-pause" class="btn-secondary">PAUSAR</button>
+                <div class="hotbar">
+                    <button class="tool-btn active" data-tool="hero" title="Colocar Héroe (70 Oro)">🛡️ HÉROE (70)</button>
+                    <button class="tool-btn" data-tool="rock" title="Poner Muro (25 Oro)">🧱 MURO (25)</button>
+                    <button class="tool-btn" data-tool="spell" title="Lanzar Rayo (120 Oro)">⚡ RAYO (120)</button>
+                </div>
+                <button id="btn-start"  class="btn-primary">⚔ NUEVA PARTIDA</button>
+                <button id="btn-pause"  class="btn-secondary">▐▐ PAUSAR</button>
             </div>
 
+            <!-- Live stats -->
             <div class="live-stats">
-                <h3>Estadísticas en Vivo</h3>
-                <div class="stat-row">
-                    <span class="dot bueno-bg"></span> Buenos: 
-                    <strong id="stat-buenos">0</strong>
+                <h3 class="group-title">📊 En Vivo</h3>
+                <div class="stat-row hero-row">
+                    <span class="stat-icon">🛡</span>
+                    <span class="stat-name">Héroes</span>
+                    <strong class="stat-num hero-num" id="stat-buenos">0</strong>
                 </div>
-                <div class="stat-row">
-                    <span class="dot malo-bg"></span> Malos: 
-                    <strong id="stat-malos">0</strong>
+                <div class="stat-row enemy-row">
+                    <span class="stat-icon">☠</span>
+                    <span class="stat-name">Enemigos</span>
+                    <strong class="stat-num enemy-num" id="stat-malos">0</strong>
                 </div>
-                <div class="stat-row">
-                    <span class="dot piedra-bg"></span> Turno: 
-                    <strong id="stat-turnos">0</strong>
+            </div>
+
+            <!-- Legend -->
+            <div class="legend">
+                <h3 class="group-title">👾 Enemigos</h3>
+                <div class="legend-row"><span class="leg-dot eye-dot"></span><span>Ojo Volador</span></div>
+                <div class="legend-row"><span class="leg-dot skel-dot"></span><span>Esqueleto</span></div>
+                <div class="legend-row"><span class="leg-dot gob-dot"></span><span>Goblin</span></div>
+                <div class="legend-row"><span class="leg-dot mush-dot"></span><span>Hongo</span></div>
+            </div>
+
+            <!-- Tactical Log -->
+            <div class="system-log" id="system-log">
+                <h3 class="group-title">📋 Tactical Log</h3>
+                <div class="log-entries" id="log-entries">
+                    <div class="log-entry system">SYSTEM READY...</div>
                 </div>
+            </div>
+
+            <div class="sidebar-footer">
+                <p>⛰ Las piedras bloquean<br>a todos los combatientes</p>
             </div>
         </aside>
 
-        <!-- Área de Visualización (Derecha) -->
-        <main class="canvas-wrapper">
+        <!-- ── Canvas ────────────────────────────────────────────────────── -->
+        <main class="canvas-wrapper" id="canvas-wrapper">
             <canvas id="simulationCanvas"></canvas>
         </main>
     </div>
 
-    <!-- Modal Game Over -->
+    <!-- ── Game Over Modal ──────────────────────────────────────────────── -->
     <div id="modal-gameover" class="modal hidden">
         <div class="modal-content">
-            <h2>SIMULACIÓN TERMINADA</h2>
-            <p id="winner-text"></p>
-            <button id="btn-modal-restart">Nueva Configuración</button>
+            <h2 id="winner-text">OPERATION STATUS</h2>
+            <p id="winner-sub"></p>
+            <div class="modal-stats-grid">
+                <div class="modal-stat">
+                    <span class="m-stat-label">Neutralizaciones</span>
+                    <span class="m-stat-value" id="m-stat-kills">0</span>
+                </div>
+                <div class="modal-stat">
+                    <span class="m-stat-label">Capital Invertido</span>
+                    <span class="m-stat-value" id="m-stat-gold">0</span>
+                </div>
+                <div class="modal-stat">
+                    <span class="m-stat-label">Nivel de Amenaza</span>
+                    <span class="m-stat-value" id="m-stat-threat">1.0</span>
+                </div>
+            </div>
+            <button id="btn-modal-restart" class="btn-primary">REINITIALIZE SYSTEM</button>
         </div>
     </div>
 
-    <!-- Scripts -->
     <script type="module" src="js/main.js"></script>
 </body>
 </html>

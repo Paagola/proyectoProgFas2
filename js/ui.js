@@ -3,67 +3,80 @@ export const UI = {
     inputBuenos: document.getElementById('cfg-buenos'),
     inputMalos: document.getElementById('cfg-malos'),
     inputPiedras: document.getElementById('cfg-piedras'),
-    inputFps: document.getElementById('cfg-fps'),
     btnStart: document.getElementById('btn-start'),
     btnPause: document.getElementById('btn-pause'),
     statBuenos: document.getElementById('stat-buenos'),
     statMalos: document.getElementById('stat-malos'),
-    statTurnos: document.getElementById('stat-turnos'),
+    statWave: document.getElementById('stat-wave'),
+    statLevel: document.getElementById('stat-level'),
+    statGold: document.getElementById('stat-gold'),
     modal: document.getElementById('modal-gameover'),
     winnerText: document.getElementById('winner-text'),
+    winnerSub: document.getElementById('winner-sub'),
     btnModalRestart: document.getElementById('btn-modal-restart'),
-    canvas: document.getElementById('simulationCanvas')
+    canvas: document.getElementById('simulationCanvas'),
+    toolBtns: document.querySelectorAll('.tool-btn'),
+    logEntries: document.getElementById('log-entries'),
+    _hudMessage: '',
 };
 
-/**
- * Updates the text display for a range input.
- * @param {HTMLInputElement} input 
- * @param {string} idVal 
- */
 export function updateInputDisplay(input, idVal) {
-    document.getElementById(idVal).innerText = input.value;
+    const el = document.getElementById(idVal);
+    if (el) el.innerText = input.value;
 }
 
-/**
- * Updates the stats displayed in the UI.
- * @param {number} buenos 
- * @param {number} malos 
- * @param {number} turnos 
- */
-export function updateStatsUI(buenos, malos, turnos) {
-    UI.statBuenos.innerText = buenos;
-    UI.statMalos.innerText = malos;
-    UI.statTurnos.innerText = turnos;
+export function updateStatsUI(buenos, malos, wave, level, gold) {
+    if (UI.statBuenos) UI.statBuenos.innerText = buenos;
+    if (UI.statMalos) UI.statMalos.innerText = malos;
+    if (UI.statWave) UI.statWave.innerText = wave;
+    if (UI.statLevel) UI.statLevel.innerText = level;
+    if (UI.statGold) UI.statGold.innerText = gold;
 }
 
-/**
- * Shows the game over modal with the winner text.
- * @param {string} message 
- */
-export function showGameOverModal(message) {
+export function showHudMessage(msg) {
+    UI._hudMessage = msg;
+}
+
+export function showGameOverModal(result, level, wave, stats) {
+    if (!UI.modal) return;
     UI.modal.classList.remove('hidden');
-    UI.winnerText.innerText = message;
+    UI.modal.dataset.result = result;
+
+    if (result === 'defeat') {
+        if (UI.winnerText) UI.winnerText.innerText = '☠ OPERACIÓN COMPROMETIDA ☠';
+        if (UI.winnerSub) UI.winnerSub.innerText = `Sector perdido en el Nivel ${level}, Fase ${wave}.`;
+    } else {
+        if (UI.winnerText) UI.winnerText.innerText = '⚔ MISIÓN COMPLETADA ⚔';
+        if (UI.winnerSub) UI.winnerSub.innerText = `¡Dominio total del sistema establecido!`;
+    }
+
+    if (stats) {
+        document.getElementById('m-stat-kills').innerText = stats.kills;
+        document.getElementById('m-stat-gold').innerText = stats.goldSpent;
+        document.getElementById('m-stat-threat').innerText = stats.peakThreat.toFixed(2);
+    }
 }
 
-/**
- * Hides the game over modal.
- */
 export function hideGameOverModal() {
-    UI.modal.classList.add('hidden');
+    if (UI.modal) UI.modal.classList.add('hidden');
 }
 
-/**
- * Updates the pause button text.
- * @param {boolean} isRunning 
- */
 export function updatePauseButton(isRunning) {
-    UI.btnPause.innerText = isRunning ? "PAUSAR" : "REANUDAR";
+    if (UI.btnPause) UI.btnPause.innerText = isRunning ? 'PAUSAR' : 'REANUDAR';
 }
 
-/**
- * Updates the FPS display label.
- * @param {number} fps 
- */
-export function updateFPSDisplay(fps) {
-    document.getElementById('val-fps').innerText = fps;
+export function addLogEntry(msg, type = 'combat') {
+    if (!UI.logEntries) return;
+    const entry = document.createElement('div');
+    entry.className = `log-entry ${type}`;
+    const time = new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    entry.innerText = `[${time}] ${msg}`;
+    UI.logEntries.prepend(entry); // Prepend because we use flex-direction: column-reverse? No, let's just append and scroll.
+    // Actually, prepend works better with column-reverse if we want newest at top, 
+    // but the CSS was column-reverse which means newest at bottom. 
+    // Let's use append and scroll.
+}
+
+export function clearLog() {
+    if (UI.logEntries) UI.logEntries.innerHTML = '';
 }

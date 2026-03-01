@@ -1,10 +1,12 @@
-import { Piedra, Malo, Bueno } from './models.js';
+import { Piedra } from './models.js';
 
 export let CONSTANTS = {
-    ROWS: 10,
-    COLS: 25,
-    CELL_SIZE: 64,      // Resolución ajustada para que quepan más elementos
-    SAFE_DISTANCE: 5    // Distancia mínima en spawn (Ajustada según Java legacy)
+    ROWS: 14,
+    COLS: 32,
+    CELL_SIZE: 64,
+    SAFE_DISTANCE: 6,
+    HERO_SPAWN_COLS: 8,    // Heroes spawn in left 8 columns
+    ENEMY_SPAWN_COL: 31,   // Enemies spawn at rightmost column
 };
 
 export class GameEngine {
@@ -16,7 +18,6 @@ export class GameEngine {
         this.grid = Array(CONSTANTS.ROWS).fill(null).map(() => Array(CONSTANTS.COLS).fill(null));
     }
 
-    // --- Helpers de Distancia ---
     getManhattanDistance(e1, e2) {
         return Math.abs(e1.x - e2.x) + Math.abs(e1.y - e2.y);
     }
@@ -25,15 +26,27 @@ export class GameEngine {
         return Math.max(Math.abs(e1.x - e2.x), Math.abs(e1.y - e2.y));
     }
 
-    // --- Gestión del Grid ---
     isCellEmpty(x, y, margin = 0) {
         if (x < margin || x >= CONSTANTS.COLS - margin || y < margin || y >= CONSTANTS.ROWS - margin) return false;
+        return this.grid[y][x] === null;
+    }
+
+    isCellWalkable(x, y) {
+        // We block y < 2 to prevent sprites clipping out the top (HUD area).
+        if (x < 0 || x >= CONSTANTS.COLS || y < 2 || y >= CONSTANTS.ROWS) return false;
         const cell = this.grid[y][x];
-        return cell === null;
+        // Rocks are not walkable - using constructor name to avoid circular dependency
+        if (cell && cell.constructor.name === 'Piedra') return false;
+        return true;
+    }
+
+    isCellEmptyForMove(x, y) {
+        if (x < 0 || x >= CONSTANTS.COLS || y < 2 || y >= CONSTANTS.ROWS) return false;
+        return this.grid[y][x] === null;
     }
 
     placeEntity(entity) {
-        if (this.isCellEmpty(entity.x, entity.y)) {
+        if (entity.x >= 0 && entity.x < CONSTANTS.COLS && entity.y >= 2 && entity.y < CONSTANTS.ROWS && this.grid[entity.y][entity.x] === null) {
             this.grid[entity.y][entity.x] = entity;
             return true;
         }
@@ -47,22 +60,18 @@ export class GameEngine {
     }
 
     updateEntityPosition(entity, newX, newY) {
-        // Validación de seguridad estricta: NO mover si el destino está ocupado
-        // (Esto previene que un bug de IA borre una piedra del grid)
-        if (!this.isCellEmpty(newX, newY)) {
-            return;
-        }
-
+        if (!this.isCellEmptyForMove(newX, newY)) return false;
         this.grid[entity.y][entity.x] = null;
         entity.x = newX;
         entity.y = newY;
         this.grid[entity.y][entity.x] = entity;
+        return true;
     }
 
-    checkSafetyDistance(x, y, others) {
+    checkSafetyDistance(x, y, others, dist) {
+        const d = dist || CONSTANTS.SAFE_DISTANCE;
         for (const other of others) {
-            const dist = Math.abs(x - other.x) + Math.abs(y - other.y);
-            if (dist < CONSTANTS.SAFE_DISTANCE) return false;
+            if (Math.abs(x - other.x) + Math.abs(y - other.y) < d) return false;
         }
         return true;
     }
