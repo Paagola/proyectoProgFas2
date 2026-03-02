@@ -38,6 +38,10 @@ export const state = {
     hudMessageTimer: 0,
     threatLevel: 1.0, // Difficulty multiplier
 
+    // Default deployment counts (replaces UI sliders)
+    defaultBuenos: 6,
+    defaultPiedras: 20,
+
     // Stats for professional reporting
     stats: {
         kills: 0,

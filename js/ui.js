@@ -1,8 +1,5 @@
 // UI References
 export const UI = {
-    inputBuenos: document.getElementById('cfg-buenos'),
-    inputMalos: document.getElementById('cfg-malos'),
-    inputPiedras: document.getElementById('cfg-piedras'),
     btnStart: document.getElementById('btn-start'),
     btnPause: document.getElementById('btn-pause'),
     statBuenos: document.getElementById('stat-buenos'),
@@ -20,10 +17,6 @@ export const UI = {
     _hudMessage: '',
 };
 
-export function updateInputDisplay(input, idVal) {
-    const el = document.getElementById(idVal);
-    if (el) el.innerText = input.value;
-}
 
 export function updateStatsUI(buenos, malos, wave, level, gold) {
     if (UI.statBuenos) UI.statBuenos.innerText = buenos;

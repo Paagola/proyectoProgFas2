@@ -2,7 +2,7 @@ import { GameEngine, CONSTANTS } from './engine.js';
 import { Pathfinding } from './pathfinding.js';
 import { AssetManager, ANIMATIONS, getEnemyAnimConfig } from './assets.js';
 import { state } from './state.js';
-import { UI, updateInputDisplay, updatePauseButton, hideGameOverModal } from './ui.js';
+import { UI, updatePauseButton, hideGameOverModal } from './ui.js';
 import { resizeCanvas, draw } from './renderer.js';
 import { updateGameLogic, resetSimulation, handlePlayerInput } from './simulation.js';
 import { ENEMY_TYPES } from './models.js';
@@ -14,12 +14,6 @@ const assets = new AssetManager();
 
 // --- Init ---
 function init() {
-    // FORCE exact defaults to fix the sticky "16" bug
-    if (UI.inputBuenos) UI.inputBuenos.value = 6;
-    if (UI.inputPiedras) UI.inputPiedras.value = 20;
-
-    updateInputDisplay(UI.inputBuenos, 'val-buenos');
-    updateInputDisplay(UI.inputPiedras, 'val-piedras');
 
     resetSimulation(state, engine, resizeCanvas);
     updatePauseButton(true);
@@ -41,9 +35,6 @@ function loop(timestamp) {
 }
 
 // --- Event Listeners ---
-UI.inputBuenos.addEventListener('input', () => updateInputDisplay(UI.inputBuenos, 'val-buenos'));
-if (UI.inputMalos) UI.inputMalos.addEventListener('input', () => updateInputDisplay(UI.inputMalos, 'val-malos'));
-UI.inputPiedras.addEventListener('input', () => updateInputDisplay(UI.inputPiedras, 'val-piedras'));
 
 UI.btnStart.addEventListener('click', init);
 UI.btnPause.addEventListener('click', () => {
@@ -113,9 +104,6 @@ async function loadGameAssets() {
 }
 
 // --- Start ---
-updateInputDisplay(UI.inputBuenos, 'val-buenos');
-updateInputDisplay(UI.inputPiedras, 'val-piedras');
-if (UI.inputMalos) updateInputDisplay(UI.inputMalos, 'val-malos');
 
 state.isRunning = false;
 updatePauseButton(false);

@@ -1,4 +1,4 @@
-import { Piedra, Malo, Bueno, ENEMY_TYPES } from './models.js';
+import { Piedra, Malo, Bueno, Personaje, ENEMY_TYPES } from './models.js';
 import { CONSTANTS } from './engine.js';
 import { ANIMATIONS, getEnemyAnimConfig } from './assets.js';
 import { UI, updateStatsUI, showHudMessage, showGameOverModal, updatePauseButton, addLogEntry, clearLog } from './ui.js';
@@ -527,11 +527,9 @@ export function resetSimulation(state, engine, resizeCallback) {
     addLogEntry("SIMULATION REINITIALIZED", "system");
     addLogEntry(`LEVEL 01 INITIALIZED — STANDBY FOR DEPLOYMENT`, "system");
 
-    // Config from sliders - Forcing direct DOM read to fix the "16" bug
-    const inputB = document.getElementById('cfg-buenos');
-    const inputP = document.getElementById('cfg-piedras');
-    const countBuenos = inputB ? parseInt(inputB.value) : 6;
-    const countPiedras = inputP ? parseInt(inputP.value) : 20;
+    // Deployment counts (now fixed or configurable via state)
+    const countBuenos = state.defaultBuenos;
+    const countPiedras = state.defaultPiedras;
 
     const MARGIN = 1;
 
